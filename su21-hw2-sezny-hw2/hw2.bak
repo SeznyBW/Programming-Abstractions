@@ -1,0 +1,8 @@
+#lang racket
+
+; Export all of our top-level definitions so that tests.rkt
+; can import them. See tests.rkt
+(provide (all-defined-out))
+
+(define (merge lst1 lst2)
+  (error 'merge "Unimplemented"))

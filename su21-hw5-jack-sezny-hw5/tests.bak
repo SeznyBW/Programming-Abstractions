@@ -1,0 +1,61 @@
+#lang racket
+
+(require rackunit rackunit/text-ui rackunit/gui)
+(require "hw5.rkt")
+
+(define subset-sum-tests
+  (test-suite
+   "subset-sum"
+   (test-equal? "3 34 4 12 5 2, sum = 9"
+                (apply + (subset-sum 9 '(3 34 4 12 5 2)))
+                9)
+   (test-false "3 34 4 12 5 2, sum = 28"
+               (subset-sum 28 '(3 34 4 12 5 2)))
+   (test-equal? "2 10 5 7 3 8 6, sum = 23"
+                (apply + (subset-sum 23 '(2 10 5 7 3 8 6)))
+                23)
+   (test-false "2 10 5 7, sum = 23"
+               (subset-sum 23 '(2 10 5 7)))))
+
+(define (is-no-repeat? lst)
+  (define lst-len (length lst))
+  (define (f seq-len sub-lst-len sub-lst)
+    (cond [(> (* 2 seq-len) lst-len) #t]
+          [(> (* 2 seq-len) sub-lst-len)
+           (f (add1 seq-len) lst-len lst)]
+          [else
+           (let-values ([(prefix remainder) (split-at sub-lst seq-len)])
+             (if (list-prefix? prefix remainder)
+                 #f
+                 (f seq-len (sub1 sub-lst-len) (rest sub-lst))))]))
+  (f 1 lst-len lst))
+
+(define (no-repeat-test n)
+  (let ([lst (no-repeat n)])
+    (check-pred list? lst)
+    (check-equal? (length lst) n)
+    (check-pred is-no-repeat? lst)))
+
+(define no-repeat-tests
+  (test-suite
+   "no-repeat"
+   (test-case "1" (no-repeat-test 1))
+   (test-case "2" (no-repeat-test 2))
+   (test-case "3" (no-repeat-test 3))
+   (test-case "4" (no-repeat-test 4))
+   (test-case "5" (no-repeat-test 5))
+   (test-case "6" (no-repeat-test 6))
+   (test-case "7" (no-repeat-test 7))
+   (test-case "8" (no-repeat-test 8))
+   (test-case "9" (no-repeat-test 9))
+   (test-case "100" (no-repeat-test 100))))
+
+
+; Define an All Tests test suite.
+(define all-tests
+  (test-suite
+   "All tests"
+   subset-sum-tests
+   no-repeat-tests))
+
+(run-tests all-tests)

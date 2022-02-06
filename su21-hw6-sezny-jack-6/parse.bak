@@ -1,0 +1,78 @@
+#lang racket
+;Sezny Watkins
+;Jack Egan
+
+(provide (all-defined-out))
+
+(define (parse input)
+  (define (parse-error)
+    (error 'parse "Invalid syntax ~s" input))
+  (cond [(number? input) (lit-exp input)]
+        [(symbol? input) (var-exp input)]
+        [(list? input)
+         (cond [(empty? input) (parse-error)]
+               [(equal? (first input) 'if) (cond-exp (map parse (rest input)))]
+                                            ;(parse second input) (parse third input) (parse fourth input))]
+               [else (app-exp (parse (first input)) (map parse (rest input)))])]
+        [else (parse-error)]))
+
+(define (lit-exp num)
+  (list 'lit-exp num))
+
+(define (lit-exp? exp)
+  (cond [(equal? (first exp) 'lit-exp) #t]
+        [else #f]))
+
+(define (lit-exp-num exp)
+  (second exp))
+
+(define (var-exp var)
+  (list 'var-exp var))
+
+(define (var-exp? exp)
+  (cond [(equal? (first exp) 'var-exp) #t]
+        [else #f]))
+
+(define (var-exp-symbol exp)
+  (second exp))
+
+(define (prim-proc proc)
+  (list 'prim-proc proc))
+
+(define (prim-proc? exp)
+  (cond [(equal? (first exp) 'prim-proc) #t]
+        [else #f]))
+
+(define (prim-proc-op value)
+  (second value))
+
+(define (app-exp proc args)
+  (list 'app-exp proc args))
+
+(define (app-exp? exp)
+  (cond [(equal? (first exp) 'app-exp) #t]
+        [else #f]))
+
+(define (app-exp-proc exp)
+  (second exp))
+
+(define (app-exp-args exp)
+  (last exp))
+
+(define (cond-exp exp)
+  (list 'cond-exp exp))
+
+(define (cond-exp? exp)
+  (cond [(equal? (first exp) 'cond-exp) #t]
+        [else #f]))
+
+(define (cond-exp-cond exp)
+  (second exp))
+
+(define (cond-exp-true exp)
+  (third exp))
+
+(define (cond-exp-false exp)
+  (fourth exp))
+
+(parse (if 5 5 0))

@@ -1,0 +1,73 @@
+#lang racket
+
+(require rackunit)
+(require "env.rkt" "parse.rkt" "interp.rkt")
+
+(provide interp-tests)
+
+(define test-env
+  (env '(x y) '(10 23) init-env))
+
+
+
+(define interp-tests
+  (test-suite
+   "Interpreter tests"
+   (test-eqv? "Number"
+             (eval-exp (lit-exp 5) empty-env)
+             5)
+   (test-eqv? "Symbol in env"
+              (eval-exp (var-exp 'x) init-env)
+              23)
+   (test-exn "Symbol not in env"
+             exn:fail?
+             (lambda () (eval-exp (var-exp 'foo) init-env)))
+   (test-eqv? "procedure"
+              (eval-exp (app-exp (var-exp '+) '((lit-exp 1) (lit-exp 2) (lit-exp 3))) init-env)
+              6)
+   (test-eqv? "add1"
+              (eval-exp (app-exp (var-exp 'add1) '((lit-exp 2))) init-env)
+              3)
+   (test-exn "add1 too many args"
+             exn:fail?
+             (lambda () (eval-exp (app-exp (var-exp 'add1) '((lit-exp 2) (lit-exp 3))) init-env)))
+   (test-eqv? "car"
+               (eval-exp (app-exp (var-exp 'car) '((lit-exp 2) (lit-exp 3) (lit-exp 4))) init-env)
+               2)
+   (test-eqv? "false & eqv?"
+              (eval-exp (cond-exp '((app-exp (var-exp eqv?) ((lit-exp 5) (lit-exp 0))) (lit-exp 1) (lit-exp 2))) init-env)
+              2)
+   (test-eqv? "true & lt"
+              (eval-exp (cond-exp '((app-exp (var-exp lt?) ((lit-exp 0) (lit-exp 5))) (lit-exp 1) (lit-exp 2))) init-env)
+              1)
+   (test-eqv? "let"
+              (eval-exp '(let-exp (x y) ((lit-exp 20) (lit-exp 5)) (app-exp (var-exp *) ((var-exp x) (var-exp y)))) init-env)
+              100)
+
+  (test-eqv? "lambda"
+             (eval-exp '(app-exp (lambda-exp (x y) (app-exp (var-exp +) ((var-exp x) (var-exp y)))) ((lit-exp 5) (lit-exp 6))) init-env)
+             11)
+  (eval-exp '(set-exp y (lit-exp 10)) init-env)
+  (test-eqv? "set!"
+             (eval-exp '(var-exp y) init-env)
+             10)
+  (test-eqv? "begin"
+             (eval-exp '(begin-exp ((set-exp y (lit-exp 8)) (app-exp (var-exp +) ((var-exp y) (lit-exp 5))))) init-env)
+             13)
+  (test-eqv? "let-rec"
+             (eval-exp
+              '(let-exp
+                (fac)
+                ((lit-exp 0))
+                (let-exp
+                 (g48298)
+                 ((lambda-exp
+                   (x)
+                   (cond-exp
+                    ((app-exp (var-exp eqv?) ((var-exp x) (lit-exp 0)))
+                     (lit-exp 1)
+                     (app-exp (var-exp *) ((var-exp x) (app-exp (var-exp fac) ((app-exp (var-exp sub1) ((var-exp x)))))))))))
+                 (begin-exp ((set-exp fac (var-exp g48298)) (app-exp (var-exp fac) ((lit-exp 4)))))))
+              init-env)
+             24)
+   ))

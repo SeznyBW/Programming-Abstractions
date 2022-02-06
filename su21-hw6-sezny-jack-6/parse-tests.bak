@@ -1,0 +1,41 @@
+#lang racket
+
+(require rackunit rackunit/text-ui rackunit/gui)
+(require "parse.rkt")
+
+(provide parse-tests)
+
+(define parse-tests
+  (test-suite
+   "Parse tests"
+   (test-pred "Literal"
+           lit-exp?
+           (parse 5))
+   (test-equal? "lit-exp-num"
+                (lit-exp-num (parse 5))
+                5)
+   (test-pred "variable"
+              var-exp?
+              (parse 'x))
+   (test-equal? "var-exp-symbol"
+                (var-exp-symbol (parse 'x))
+                'x)
+   (test-pred "app-exp"
+              app-exp?
+              (parse '(+ 1 2 3)))
+   (test-equal? "prim-proc"
+                (prim-proc-op (app-exp-proc (parse '(+ 1 2 3))))
+                '+)
+   (test-equal? "literals"
+                (map lit-exp-num (app-exp-args (parse '(+ 1 2 3))))
+                '(1 2 3))
+   (test-exn "bad function"
+             exn:fail?
+             (lambda () (parse ('foo 1 2 3))))
+   (test-exn "bad function with vars"
+             exn:fail?
+             (lambda () (parse ('foo 1 2 3))))
+   (test-exn "empty list"
+             exn:fail?
+             (lambda () (parse '())))
+   ))

@@ -1,0 +1,37 @@
+#lang racket
+
+(require rackunit)
+(require "env.rkt" "parse.rkt" "interp.rkt")
+
+(provide interp-tests)
+
+(define test-env
+  (env '(x y) '(10 23) init-env))
+
+(define interp-tests
+  (test-suite
+   "Interpreter tests"
+   (test-eqv? "Number"
+             (eval-exp (lit-exp 5) empty-env)
+             5)
+   (test-eqv? "Symbol in env"
+              (eval-exp (var-exp 'x) init-env)
+              23)
+   (test-exn "Symbol not in env"
+             exn:fail?
+             (lambda () (eval-exp (var-exp 'foo) init-env)))
+   (test-eqv? "procedure"
+              (eval-exp (app-exp (var-exp '+) '((lit-exp 1) (lit-exp 2) (lit-exp 3))) init-env)
+              6)
+   (test-eqv? "add1"
+              (eval-exp (app-exp (var-exp 'add1) '((lit-exp 2))) init-env)
+              3)
+   (test-exn "add1 too many args"
+             exn:fail?
+             (lambda () (eval-exp (app-exp (var-exp 'add1) '((lit-exp 2) (lit-exp 3))) init-env)))
+   (test-eqv? "car"
+               (eval-exp (app-exp (var-exp 'car) '((lit-exp 2) (lit-exp 3) (lit-exp 4))) init-env)
+               2)
+
+             
+   ))

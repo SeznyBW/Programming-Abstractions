@@ -1,0 +1,61 @@
+#lang racket
+;Sezny Watkins
+;Jack Egan
+
+(require "parse.rkt")
+(require "env.rkt")
+
+(provide eval-exp
+         init-env)
+
+(define (apply-primitive-op op args)
+  (define (args-error)
+    (error 'apply-primitive-op "wrong number of arguments: ~s" args))
+  (cond [(eq? op '+) (apply + args)]
+        [(eq? op '-) (apply - args)]
+        [(eq? op '*) (apply * args)]
+        [(eq? op '/) (apply / args)]
+        [(eq? op 'add1)
+         (cond [(equal? (length args) 1) (add1 (first args))]
+               [else (args-error)])]
+        [(eq? op 'sub1)
+         (cond [(equal? (length args) 1) (sub1 (first args))]
+               [else (args-error)])]
+        [(eq? op 'negate)
+         (cond [(equal? (length args) 1) (* -1 (first args))]
+               [else (args-error)])]
+        [(eq? op 'list) (apply list args)]
+        [(eq? op 'cons)
+         (cond [(equal? (length args) 2) (cons (first args) (second args))]
+               [else (args-error)])]
+        [(eq? op 'car) (car args)]
+        [(eq? op 'cdr) (cdr args)]
+        [else (error 'apply-primitive-op "Unknown primitive: ~s" op)]))
+
+(define (apply-proc proc args)
+  (cond [(prim-proc? proc)
+         (apply-primitive-op (prim-proc-op proc) args)]
+        [else (error 'apply-proc "bad procedure: ~s" proc)]))
+
+(define (duplicator args e)
+  (cond [(empty? args) empty]
+        [else (cons e (duplicator (rest args) e))]))
+
+
+(define (eval-exp tree e)
+  (cond [(lit-exp? tree) (lit-exp-num tree)]
+        [(var-exp? tree) (env-lookup e (var-exp-symbol tree))]
+        [(app-exp? tree) (apply-proc (eval-exp (app-exp-proc tree) e) (map eval-exp (app-exp-args tree) (duplicator (app-exp-args tree) e)))]
+        [(cond-exp? tree) (if (or (equal? (eval-exp cond-exp-cond e) 0) (false? (eval-exp cond-exp-cond e))) (eval-exp cond-exp-false e) (eval-exp cond-exp-true e))]
+        [else (error 'eval-exp "Invalid tree: ~s" tree)]))
+
+(define primitive-operators '(+ - * / add1 sub1 negate list cons car cdr))
+
+(define prim-env
+  (env primitive-operators
+       (map prim-proc primitive-operators)
+       empty-env))
+
+(define init-env
+  (env '(x y null True False) '(23 42 empty True False) prim-env))
+

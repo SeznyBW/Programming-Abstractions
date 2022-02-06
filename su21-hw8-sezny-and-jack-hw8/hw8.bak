@@ -1,0 +1,10 @@
+#lang racket
+; Your name(s) here
+
+(require racket/stream)
+(require "keyboard.rkt")
+
+(provide (all-defined-out))
+
+(define ham
+  (stream 1 2 3))
